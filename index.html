@@ -1,203 +1,131 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>TPrintNotes</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Free Fire Mini</title>
 <style>
-body{
-    margin:0;
-    font-family: system-ui, sans-serif;
-    background:#f5f6fa;
-    color:#333;
-}
-header{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 16px;
-    background:#fff;
-    border-bottom:1px solid #ddd;
-}
-header img{height:32px;}
-header h1{font-size:18px;margin:0;}
-
-.container{
-    max-width:900px;
-    margin:20px auto;
-    padding:0 12px;
-}
-
-.toolbar{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    margin-bottom:8px;
-}
-.toolbar button{
-    padding:6px 10px;
-    border:1px solid #ccc;
-    background:#fff;
-    cursor:pointer;
-    border-radius:4px;
-}
-
-#editor{
-    min-height:260px;
-    background:#fff;
-    border:1px solid #ccc;
-    border-radius:6px;
-    padding:10px;
-    outline:none;
-}
-
-.actions{
-    margin-top:10px;
-    display:flex;
-    gap:8px;
-}
-.actions button{
-    padding:8px 14px;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-    background:#4f6bed;
-    color:#fff;
-}
-.actions button.secondary{background:#666;}
-
-#linkBox{
-    margin-top:10px;
-    display:none;
-}
-#linkBox input{
-    width:100%;
-    padding:8px;
-    margin-bottom:6px;
-}
-
-.output{
-    margin-top:15px;
-    background:#fff;
-    padding:10px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    display:none;
-    word-break:break-all;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#1a1a2e;font-family:Arial,sans-serif}
+canvas{display:block}
+#btn{position:fixed;bottom:30px;right:30px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;user-select:none;touch-action:none;cursor:pointer}
+#btn:active{background:rgba(255,255,255,0.4)}
+#gun{position:fixed;top:20px;right:20px;color:#fff;font-size:16px;background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:8px}
+#hp{position:fixed;top:20px;left:20px;color:#fff;font-size:16px;background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:8px}
 </style>
 </head>
 <body>
-
-<header>
-    <img src="https://thumbs2.imgbox.com/46/ef/KIVK6UlM_t.png">
-    <h1>TPrintNotes</h1>
-</header>
-
-<div class="container">
-
-<div class="toolbar">
-    <button onclick="cmd('bold')"><b>B</b></button>
-    <button onclick="cmd('italic')"><i>I</i></button>
-    <button onclick="cmd('underline')"><u>U</u></button>
-    <button onclick="showLink()">Link</button>
-</div>
-
-<div id="editor" contenteditable="true">Viết nội dung note ở đây...</div>
-
-<div id="linkBox">
-    <input id="linkText" placeholder="Chữ hiển thị">
-    <input id="linkUrl" placeholder="https://example.com">
-    <button onclick="insertLink()">Chèn link</button>
-</div>
-
-<div class="actions">
-    <button onclick="saveNote()">Lưu & Chia sẻ</button>
-    <button class="secondary" onclick="showRaw()">Raw</button>
-</div>
-
-<div class="output" id="output"></div>
-
-</div>
-
+<canvas id="c"></canvas>
+<div id="btn">BẮN</div>
+<div id="gun">UMP</div>
+<div id="hp">NPC: 200</div>
 <script>
-// ===== NOTE LOGIC =====
-function cmd(c){document.execCommand(c,false,null);}
-function showLink(){linkBox.style.display="block";}
+const c=document.getElementById('c'),x=c.getContext('2d');
+let W,H;
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+addEventListener('resize',resize);resize();
+const player={x:0,y:0,angle:0};
+const npc={x:0,y:0,hp:200,maxHp:200};
+let bullets=[];
+let gun='UMP';
+let gunStats={
+UMP:{dmg:50,rof:100,spread:0.05,range:800,speed:15},
+M1887:{dmg:100,rof:600,spread:0.1,range:300,speed:20}
+};
+let lastShot=0;
+let dragging=false;
+let dragStart={x:0,y:0};
+let aimOffset={x:0,y:0};
+let fireBtn=document.getElementById('btn');
+let gunLabel=document.getElementById('gun');
+let hpLabel=document.getElementById('hp');
 
-function insertLink(){
-    let t=linkText.value.trim();
-    let u=linkUrl.value.trim();
-    try{new URL(u)}catch{alert("Link không hợp lệ");return;}
-    document.execCommand("insertHTML",false,`<a href="${u}" target="_blank">${t||u}</a>`);
-    linkBox.style.display="none";
+function init(){
+player.x=W/2;player.y=H/2;
+npc.x=W/2+200;npc.y=H/2-100;
+}
+init();
+
+function shoot(){
+let now=Date.now();
+if(now-lastShot<gunStats[gun].rof)return;
+lastShot=now;
+let s=gunStats[gun];
+let angle=Math.atan2(npc.y-player.y,npc.x-player.x);
+angle+=aimOffset.x*0.01;
+let dx=Math.cos(angle),dy=Math.sin(angle);
+bullets.push({x:player.x,y:player.y,dx,dy,dmg:s.dmg,speed:s.speed,life:s.range/s.speed});
 }
 
-function genID(){
-    const c="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let r=""; for(let i=0;i<10;i++) r+=c[Math.floor(Math.random()*c.length)];
-    return r;
+function update(){
+bullets.forEach(b=>{
+b.x+=b.dx*b.speed;
+b.y+=b.dy*b.speed;
+b.life--;
+if(Math.hypot(b.x-npc.x,b.y-npc.y)<30){
+npc.hp-=b.dmg;
+b.life=0;
+}
+});
+bullets=bullets.filter(b=>b.life>0);
+if(npc.hp<0)npc.hp=0;
+hpLabel.textContent='NPC: '+npc.hp;
 }
 
-function saveNote(){
-    let c=editor.innerHTML.trim();
-    if(!c){alert("Note trống");return;}
-    let id=genID();
-    localStorage.setItem("note_"+id,c);
-    history.pushState({}, "", id);
-    showLinkOut(id);
+function draw(){
+x.fillStyle='#2d4a3e';x.fillRect(0,0,W,H);
+x.strokeStyle='#3a5a4a';x.lineWidth=1;
+for(let i=0;i<W;i+=50){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}
+for(let i=0;i<H;i+=50){x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
+x.fillStyle='#4a8c5c';x.beginPath();x.arc(npc.x,npc.y,25,0,Math.PI*2);x.fill();
+x.fillStyle='#8c4a4a';x.beginPath();x.arc(player.x,player.y,20,0,Math.PI*2);x.fill();
+x.fillStyle='#fff';x.font='12px Arial';
+x.fillText('NPC',npc.x-15,npc.y-35);
+x.fillText('BẠN',player.x-15,player.y-30);
+x.fillStyle='#ff0';
+bullets.forEach(b=>{x.beginPath();x.arc(b.x,b.y,3,0,Math.PI*2);x.fill()});
+let cx=W/2+aimOffset.x,cy=H/2+aimOffset.y;
+x.strokeStyle='#0f0';x.lineWidth=2;
+x.beginPath();x.moveTo(cx-15,cy);x.lineTo(cx+15,cy);x.moveTo(cx,cy-15);x.lineTo(cx,cy+15);x.stroke();
+x.strokeStyle='#fff';x.lineWidth=1;
+x.beginPath();x.arc(cx,cy,8,0,Math.PI*2);x.stroke();
 }
 
-function showLinkOut(id){
-    let url=location.origin+location.pathname.replace(/\/[^\/]*$/,"/")+id;
-    output.style.display="block";
-    output.innerHTML=`Link chia sẻ:<br><a href="${url}">${url}</a>`;
+function loop(){update();draw();requestAnimationFrame(loop)}
+loop();
+
+addEventListener('pointerdown',e=>{
+if(e.target.id==='btn'){
+dragging=true;
+dragStart={x:e.clientX,y:e.clientY};
+shoot();
 }
+});
 
-function loadNote(){
-    let id=location.pathname.split("/").pop();
-    let note=localStorage.getItem("note_"+id);
-    if(note){
-        editor.innerHTML=note;
-        showLinkOut(id);
-    }
+addEventListener('pointermove',e=>{
+if(dragging){
+let dx=e.clientX-dragStart.x;
+let dy=e.clientY-dragStart.y;
+aimOffset.x=dx*0.5;
+aimOffset.y=dy*0.5;
+let max=100;
+let d=Math.hypot(aimOffset.x,aimOffset.y);
+if(d>max){aimOffset.x*=max/d;aimOffset.y*=max/d}
 }
+});
 
-function showRaw(){
-    output.style.display="block";
-    output.textContent=editor.innerHTML;
-}
+addEventListener('pointerup',e=>{
+if(e.target.id==='btn'){dragging=false;aimOffset={x:0,y:0}}
+});
 
-loadNote();
+setInterval(()=>{
+if(dragging)shoot();
+},50);
 
-// ===== ANTI DEVTOOLS =====
-(function(){
-    document.addEventListener("keydown",e=>{
-        if(
-            e.key==="F12" ||
-            (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(e.key)) ||
-            (e.ctrlKey && e.key==="U")
-        ){
-            e.preventDefault();
-            location.replace("about:blank");
-        }
-    });
-
-    document.addEventListener("contextmenu",e=>{
-        e.preventDefault();
-        location.replace("about:blank");
-    });
-
-    setInterval(()=>{
-        const s=performance.now();
-        debugger;
-        if(performance.now()-s>100){
-            location.replace("about:blank");
-        }
-    },1000);
-})();
+addEventListener('keydown',e=>{
+if(e.key==='1'){gun='UMP';gunLabel.textContent='UMP'}
+if(e.key==='2'){gun='M1887';gunLabel.textContent='M1887'}
+});
 </script>
-
 </body>
 </html>
