@@ -1,1 +1,382 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>FF Web Test</title><style>body{margin:0;overflow:hidden;background:#87CEEB;font-family:sans-serif;user-select:none}#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}#crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-weight:bold;font-size:30px;text-shadow:0 0 2px #000}#info{position:absolute;top:10px;left:10px;color:#fff;background:rgba(0,0,0,0.5);padding:10px;border-radius:5px}#damage{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:35px;font-weight:900;opacity:0;transition:opacity 0.1s}.headshot{color:red;text-shadow:1px 1px 0 #000}.bodyshot{color:white;text-shadow:1px 1px 0 #000}</style></head><body><div id="ui"><div id="crosshair">+</div><div id="info">Mục tiêu: <span id="hp">200</span> HP<br>Vũ khí: <span id="gun">UMP</span><br>Click vào màn hình để khóa chuột & bắn<br>Phím 1: UMP | Phím 2: M1887</div><div id="damage"></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>let scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);let renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(window.innerWidth,window.innerHeight);document.body.appendChild(renderer.domElement);let light=new THREE.DirectionalLight(0xffffff,1);light.position.set(5,10,5);scene.add(light);scene.add(new THREE.AmbientLight(0x404040));let ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshLambertMaterial({color:0x3b5e2b}));ground.rotation.x=-Math.PI/2;scene.add(ground);let npc=new THREE.Mesh(new THREE.BoxGeometry(1,2,1),new THREE.MeshLambertMaterial({color:0xff3333}));npc.position.set(0,1,-8);scene.add(npc);let hp=200,sens=0.002,pitch=0,yaw=0,isFiring=false,lastFire=0;let guns={ump:{dmg:15,rate:90,recoil:0.015,name:'UMP'},m1887:{dmg:25,pellets:4,rate:850,recoil:0.08,name:'M1887'}};let curGun=guns.ump;camera.position.set(0,1.6,0);let rc=new THREE.Raycaster();let dmgUi=document.getElementById('damage'),hpUi=document.getElementById('hp');document.addEventListener('mousemove',e=>{if(document.pointerLockElement){yaw-=e.movementX*sens;pitch-=e.movementY*sens;pitch=Math.max(-Math.PI/2,Math.min(Math.PI/2,pitch));camera.quaternion.setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));}});document.addEventListener('mousedown',()=>{document.body.requestPointerLock();isFiring=true;});document.addEventListener('mouseup',()=>isFiring=false);document.addEventListener('keydown',e=>{if(e.key==='1'){curGun=guns.ump;document.getElementById('gun').innerText=curGun.name;}if(e.key==='2'){curGun=guns.m1887;document.getElementById('gun').innerText=curGun.name;}});function showDmg(d,isHead){dmgUi.innerText='-'+d;dmgUi.className=isHead?'headshot':'bodyshot';dmgUi.style.opacity=1;dmgUi.style.top=(40+Math.random()*5)+'%';dmgUi.style.left=(50+Math.random()*2-1)+'%';setTimeout(()=>dmgUi.style.opacity=0,300);}function fire(){let now=Date.now();if(now-lastFire>=curGun.rate){lastFire=now;pitch+=curGun.recoil;rc.setFromCamera(new THREE.Vector2(0,0),camera);let hits=rc.intersectObject(npc);if(hits.length>0){let isHead=hits[0].point.y>1.6;let mult=isHead?3:1;let totalDmg=(curGun.pellets?curGun.dmg*curGun.pellets:curGun.dmg)*mult;hp-=totalDmg;if(hp<=0){hp=200;npc.position.x=(Math.random()-0.5)*10;}hpUi.innerText=hp;showDmg(totalDmg,isHead);npc.material.color.setHex(0xffffff);setTimeout(()=>npc.material.color.setHex(0xff3333),50);}}}function anim(){requestAnimationFrame(anim);if(isFiring)fire();renderer.render(scene,camera);}anim();window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Fire Arena Beta</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#080b10;font-family:Arial,sans-serif;color:#fff;user-select:none}
+canvas{display:block;width:100vw;height:100vh;cursor:crosshair}
+#hud{position:fixed;inset:0;pointer-events:none}
+#top{position:absolute;top:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start}
+#hpbox{width:245px;background:#111820cc;border:1px solid #ffffff22;border-radius:9px;padding:9px 11px;box-shadow:0 4px 20px #0008}
+#name{font-size:12px;font-weight:bold;margin-bottom:6px;color:#ddd}
+#hpbar{height:12px;background:#272d33;border-radius:8px;overflow:hidden}
+#hp{height:100%;width:100%;background:linear-gradient(90deg,#20e06b,#74ff8c);transition:.15s}
+#status{font-size:11px;color:#aaa;margin-top:5px}
+#weaponbox{text-align:right;background:#111820cc;border:1px solid #ffffff22;border-radius:9px;padding:8px 13px;min-width:180px}
+#wname{font-size:21px;font-weight:900}
+#ammo{font-size:28px;font-weight:bold;color:#ffd84a}
+#reserve{font-size:12px;color:#aaa}
+#cross{position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%)}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff;box-shadow:0 0 3px #000}
+#cross:before{width:2px;height:30px;left:14px;top:0}
+#cross:after{height:2px;width:30px;left:0;top:14px}
+#dot{position:absolute;width:4px;height:4px;border-radius:50%;background:#ff3e32;left:13px;top:13px}
+#hit{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:27px;color:#fff;opacity:0;transition:.05s;text-shadow:0 1px 3px #000}
+#hit.show{opacity:1}
+#damage{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);font-size:22px;font-weight:900;color:#ffe72e;text-shadow:0 2px 4px #000;opacity:0}
+#damage.show{animation:damage .45s ease-out}
+@keyframes damage{0%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-90%) scale(.9)}}
+#bottom{position:absolute;left:20px;right:20px;bottom:20px;display:flex;justify-content:space-between;align-items:end}
+.controls{display:flex;gap:8px;pointer-events:auto}
+.btn{border:1px solid #ffffff33;background:#111820dd;color:#fff;border-radius:8px;padding:9px 13px;font-weight:bold;cursor:pointer}
+.btn:hover{background:#26313bdd}
+#sens{position:absolute;left:50%;bottom:23px;transform:translateX(-50%);background:#111820dd;border:1px solid #ffffff22;padding:8px 12px;border-radius:8px;font-size:11px;color:#bbb;pointer-events:auto}
+#sens input{vertical-align:middle;width:110px}
+#mobile{display:none;position:absolute;inset:0;pointer-events:none}
+#fire{position:absolute;right:35px;bottom:95px;width:92px;height:92px;border-radius:50%;background:#e43128bb;border:3px solid #ffffff88;color:white;font-size:18px;font-weight:bold;pointer-events:auto}
+#reload{position:absolute;right:145px;bottom:45px;width:65px;height:65px;border-radius:50%;background:#111820bb;border:2px solid #ffffff55;color:#fff;pointer-events:auto}
+#joy{position:absolute;left:35px;bottom:55px;width:130px;height:130px;border-radius:50%;border:2px solid #ffffff33;background:#ffffff08}
+#joy i{position:absolute;width:52px;height:52px;left:37px;top:37px;border-radius:50%;background:#ffffff22;border:1px solid #ffffff44}
+#msg{position:absolute;left:50%;top:25%;transform:translateX(-50%);font-size:15px;font-weight:bold;color:#fff;text-shadow:0 2px 4px #000;opacity:0;transition:.2s}
+#msg.show{opacity:1}
+@media(max-width:700px){
+ #mobile{display:block}
+ #sens{display:none}
+ #bottom{display:none}
+ #top{top:8px;left:8px;right:8px}
+ #hpbox{width:180px}
+ #weaponbox{min-width:130px}
+ #wname{font-size:17px}
+ #ammo{font-size:23px}
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+<div id="top">
+ <div id="hpbox">
+  <div id="name">PLAYER</div>
+  <div id="hpbar"><div id="hp"></div></div>
+  <div id="status">HP 200 / 200</div>
+ </div>
+ <div id="weaponbox">
+  <div id="wname">UMP</div>
+  <div><span id="ammo">30</span> <span id="reserve">/ 120</span></div>
+ </div>
+</div>
+<div id="cross"><div id="dot"></div></div>
+<div id="hit">✦</div>
+<div id="damage">20</div>
+<div id="msg"></div>
+<div id="bottom">
+ <div class="controls">
+  <button class="btn" onclick="switchWeapon(0)">1 UMP</button>
+  <button class="btn" onclick="switchWeapon(1)">2 M1887</button>
+  <button class="btn" onclick="reload()">R RELOAD</button>
+  <button class="btn" onclick="resetNPC()">RESET NPC</button>
+ </div>
+</div>
+<div id="sens">Sensitivity <input id="sensitivity" type="range" min=".2" max="3" step=".05" value="1.15"> <span id="sv">1.15</span></div>
+</div>
+<div id="mobile">
+ <div id="joy"><i></i></div>
+ <button id="fire">FIRE</button>
+ <button id="reload">R</button>
+</div>
+
+<script>
+const c=document.getElementById("game"),x=c.getContext("2d");
+let W=innerWidth,H=innerHeight,D=devicePixelRatio||1;
+function resize(){W=innerWidth;H=innerHeight;D=devicePixelRatio||1;c.width=W*D;c.height=H*D;c.style.width=W+"px";c.style.height=H+"px";x.setTransform(D,0,0,D,0,0)}
+addEventListener("resize",resize);resize();
+
+const weapons=[
+ {name:"UMP",mag:30,reserve:120,damage:25,head:2,rate:95,reload:1450,spread:.018,recoil:.035,pellets:1,auto:true,color:"#4bc5ff"},
+ {name:"M1887",mag:2,reserve:40,damage:18,head:1.45,rate:550,reload:1250,spread:.105,recoil:.12,pellets:8,color:"#ff9e43"}
+];
+
+let player={x:0,y:0,z:0,rot:0,pitch:0,hp:200};
+let npc={x:0,y:0,z:34,hp:220,max:220,alive:true,hit:0,flash:0};
+let wi=0,ammo=30,reserve=120,lastShot=0,reloading=false,mouseDown=false;
+let keys={},shake=0,flash=0,hitTimer=0,damageTimer=0,damageText="";
+let sensitivity=1.15;
+let audio=null;
+
+document.getElementById("sensitivity").oninput=e=>{
+ sensitivity=+e.target.value;
+ document.getElementById("sv").textContent=sensitivity.toFixed(2)
+};
+
+function initAudio(){
+ if(!audio) audio=new (AudioContext||webkitAudioContext)();
+ if(audio.state==="suspended")audio.resume()
+}
+function beep(freq,dur,type="square",vol=.025){
+ if(!audio)return;
+ let o=audio.createOscillator(),g=audio.createGain();
+ o.type=type;o.frequency.value=freq;g.gain.value=vol;
+ o.connect(g);g.connect(audio.destination);o.start();
+ g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);
+ o.stop(audio.currentTime+dur)
+}
+
+addEventListener("keydown",e=>{
+ keys[e.code]=true;
+ if(e.code==="KeyR")reload();
+ if(e.code==="Digit1")switchWeapon(0);
+ if(e.code==="Digit2")switchWeapon(1);
+ if(e.code==="Space")e.preventDefault();
+});
+addEventListener("keyup",e=>keys[e.code]=false);
+
+c.addEventListener("mousedown",e=>{
+ initAudio();
+ if(e.button===0){mouseDown=true;shoot()}
+});
+addEventListener("mouseup",e=>{if(e.button===0)mouseDown=false});
+c.addEventListener("mousemove",e=>{
+ if(document.pointerLockElement===c){
+  player.rot+=e.movementX*.0025*sensitivity;
+  player.pitch-=e.movementY*.0025*sensitivity;
+  player.pitch=Math.max(-.7,Math.min(.7,player.pitch))
+ }
+});
+c.addEventListener("click",()=>{
+ if(document.pointerLockElement!==c)c.requestPointerLock()
+});
+document.getElementById("fire").addEventListener("pointerdown",e=>{
+ e.preventDefault();initAudio();mouseDown=true;shoot()
+});
+document.getElementById("fire").addEventListener("pointerup",e=>{mouseDown=false});
+document.getElementById("reload").onclick=reload;
+
+function switchWeapon(n){
+ if(reloading)return;
+ wi=n;
+ ammo=weapons[wi].mag;
+ reserve=wi===0?120:40;
+ document.getElementById("wname").textContent=weapons[wi].name;
+ document.getElementById("wname").style.color=weapons[wi].color;
+ beep(300,.05,"triangle")
+}
+function reload(){
+ if(reloading||ammo>=weapons[wi].mag||reserve<=0)return;
+ reloading=true;
+ showMsg("RELOADING...");
+ setTimeout(()=>{
+  let need=weapons[wi].mag-ammo;
+  let take=Math.min(need,reserve);
+  ammo+=take;reserve-=take;reloading=false;showMsg("")
+ },weapons[wi].reload)
+}
+function resetNPC(){
+ npc.hp=npc.max;npc.alive=true;npc.hit=0;npc.flash=0;
+ showMsg("TARGET RESET")
+}
+function showMsg(t){
+ const m=document.getElementById("msg");m.textContent=t;m.classList.add("show");
+ if(t)setTimeout(()=>m.classList.remove("show"),700)
+}
+
+function shoot(){
+ let w=weapons[wi],now=performance.now();
+ if(reloading)return;
+ if(ammo<=0){beep(90,.08);reload();return}
+ if(now-lastShot<w.rate)return;
+ lastShot=now;ammo--;
+ flash=1;shake=w.recoil*100;
+ beep(wi===0?145:90,wi===0?.045:.09,"sawtooth",.035);
+ 
+ let best=null,bestDist=999;
+ for(let i=0;i<w.pellets;i++){
+  let spread=(Math.random()-.5)*w.spread;
+  let yaw=player.rot+spread;
+  let pitch=player.pitch+(Math.random()-.5)*w.spread*.55;
+  let dx=Math.sin(yaw),dz=Math.cos(yaw);
+  
+  let tx=npc.x-player.x,tz=npc.z-player.z;
+  let dist=Math.hypot(tx,tz);
+  let aim=Math.atan2(tx,tz);
+  let diff=Math.atan2(Math.sin(aim-yaw),Math.cos(aim-yaw));
+  let vertical=Math.atan2(1.55-player.y,dist)-pitch;
+  let hitRadius=.72;
+  
+  if(Math.abs(diff)<hitRadius/dist && Math.abs(vertical)<.75/dist){
+   if(dist<bestDist){best={dist:dist,diff:diff,vertical:vertical};bestDist=dist}
+  }
+ }
+ if(best&&npc.alive){
+  let head=Math.abs(best.vertical)<.16;
+  let dmg=Math.round(w.damage*(head?w.head:1)*(1-Math.min(best.dist/80,.7)*.35));
+  if(wi===1)dmg=Math.round(dmg*(.85+Math.random()*.3));
+  npc.hp-=dmg;npc.hit=.16;npc.flash=.1;
+  damageText=(head?"HEADSHOT  ":"")+dmg;
+  damageTimer=.001;
+  document.getElementById("damage").textContent=damageText;
+  document.getElementById("damage").classList.remove("show");
+  void document.getElementById("damage").offsetWidth;
+  document.getElementById("damage").classList.add("show");
+  hitTimer=.12;
+  if(head)beep(720,.09,"square",.04);else beep(420,.045,"square",.025);
+  if(npc.hp<=0){npc.hp=0;npc.alive=false;showMsg("ELIMINATED")}
+ }
+}
+
+function move(dt){
+ let sp=keys.ShiftLeft||keys.ShiftRight?9:5.2;
+ let f=(keys.KeyW?1:0)-(keys.KeyS?1:0);
+ let s=(keys.KeyD?1:0)-(keys.KeyA?1:0);
+ if(f||s){
+  let l=Math.hypot(f,s);f/=l;s/=l;
+  player.x+=(Math.sin(player.rot)*f+Math.cos(player.rot)*s)*sp*dt;
+  player.z+=(Math.cos(player.rot)*f-Math.sin(player.rot)*s)*sp*dt;
+ }
+}
+
+function project(wx,wy,wz){
+ let dx=wx-player.x,dz=wz-player.z;
+ let yaw=player.rot;
+ let forward=dx*Math.sin(yaw)+dz*Math.cos(yaw);
+ let side=dx*Math.cos(yaw)-dz*Math.sin(yaw);
+ if(forward<=.1)return null;
+ let fov=Math.PI/3;
+ let scale=(W/2)/Math.tan(fov/2);
+ let sx=W/2+side/forward*scale;
+ let sy=H/2-(wy-player.y-player.pitch*forward)*scale/forward;
+ return {x:sx,y:sy,z:forward,scale:scale/forward}
+}
+
+function drawWorld(){
+ let grad=x.createLinearGradient(0,0,0,H);
+ grad.addColorStop(0,"#83b9d2");grad.addColorStop(.45,"#c9d4c7");grad.addColorStop(.46,"#4e623c");grad.addColorStop(1,"#273422");
+ x.fillStyle=grad;x.fillRect(0,0,W,H);
+ 
+ let horizon=H*.46;
+ x.fillStyle="#6e8d48";x.fillRect(0,horizon,W,H-horizon);
+ 
+ let grid=16;
+ for(let i=-15;i<=15;i++){
+  let p1=project(i*grid,0,2),p2=project(i*grid,0,90);
+  if(p1&&p2){x.strokeStyle="#ffffff12";x.lineWidth=1;x.beginPath();x.moveTo(p1.x,p1.y);x.lineTo(p2.x,p2.y);x.stroke()}
+ }
+ for(let z=4;z<100;z+=8){
+  let p1=project(-90,0,z),p2=project(90,0,z);
+  if(p1&&p2){x.strokeStyle="#ffffff12";x.beginPath();x.moveTo(p1.x,p1.y);x.lineTo(p2.x,p2.y);x.stroke()}
+ }
+ 
+ drawBox(-8,0,23,4,2,"#44505a");
+ drawBox(10,0,29,5,2,"#6d5846");
+ drawBox(-13,0,42,3,2,"#485a62");
+ drawBox(14,0,49,4,2,"#5b684b");
+}
+
+function drawBox(px,py,pz,w,d,col){
+ let a=project(px-w/2,py,pz-d/2),b=project(px+w/2,py,pz-d/2);
+ let cc=project(px+w/2,py+2,pz-d/2),dd=project(px-w/2,py+2,pz-d/2);
+ let e=project(px-w/2,py,pz+d/2),f=project(px+w/2,py,pz+d/2);
+ if(!a||!b||!cc||!dd)return;
+ x.fillStyle=col;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.lineTo(cc.x,cc.y);x.lineTo(dd.x,dd.y);x.closePath();x.fill();
+ if(e&&f){x.fillStyle="#0005";x.beginPath();x.moveTo(dd.x,dd.y);x.lineTo(cc.x,cc.y);x.lineTo(f.x,f.y);x.lineTo(e.x,e.y);x.closePath();x.fill()}
+}
+
+function drawNPC(){
+ if(!npc.alive){
+  let p=project(npc.x,0,npc.z);
+  if(p){x.fillStyle="#ffffff66";x.font="bold 16px Arial";x.textAlign="center";x.fillText("TARGET DOWN",p.x,p.y-10)}
+  return
+ }
+ let feet=project(npc.x,0,npc.z);
+ let chest=project(npc.x,1.25,npc.z);
+ let head=project(npc.x,2.05,npc.z);
+ if(!feet||!chest||!head)return;
+ let h=Math.abs(feet.y-head.y),scale=Math.max(3,head.scale*180);
+ let bodyW=Math.max(12,scale*.42);
+ x.save();
+ if(npc.flash>0)x.globalAlpha=.65;
+ x.fillStyle="#1c2633";
+ x.fillRect(chest.x-bodyW/2,chest.y,bodyW,h*.55);
+ x.fillStyle="#20252d";
+ x.fillRect(chest.x-bodyW*.78,chest.y+h*.48,bodyW*.34,h*.5);
+ x.fillRect(chest.x+bodyW*.44,chest.y+h*.48,bodyW*.34,h*.5);
+ x.fillStyle="#d49b72";
+ x.beginPath();x.arc(head.x,head.y,Math.max(7,scale*.18),0,Math.PI*2);x.fill();
+ x.fillStyle="#15181d";x.beginPath();x.arc(head.x,head.y-3,Math.max(7,scale*.18),Math.PI,Math.PI*2);x.fill();
+ x.fillStyle="#ff3030";x.fillRect(head.x-2,head.y-1,4,2);
+ x.restore();
+ 
+ let bw=Math.max(30,bodyW*1.7);
+ x.fillStyle="#111";x.fillRect(head.x-bw/2,head.y-18,bw,5);
+ x.fillStyle="#25e66b";x.fillRect(head.x-bw/2,head.y-18,bw*(npc.hp/npc.max),5);
+ if(npc.hit>0){
+  x.fillStyle="#fff";x.font="bold "+Math.max(13,scale*1.5)+"px Arial";x.textAlign="center";
+  x.fillText(damageText,head.x,head.y-27-npc.hit*50)
+ }
+}
+
+function drawGun(){
+ let sway=Math.sin(performance.now()/130)*2;
+ let r=shake;
+ shake*=.78;
+ x.save();
+ x.translate(W/2+65+r,H+15+r);
+ x.rotate(-.12);
+ let w=weapons[wi];
+ let color=wi===0?"#202831":"#3b2520";
+ x.fillStyle="#101419";
+ x.fillRect(-25,-175,48,210);
+ x.fillStyle=color;
+ x.fillRect(-72,-140,130,65);
+ x.fillStyle="#090c0f";
+ x.fillRect(45,-130,85,18);
+ x.fillRect(-45,-90,35,100);
+ x.fillStyle=w.color;
+ x.fillRect(-62,-144,80,7);
+ if(wi===1){
+  x.fillStyle="#17191b";x.fillRect(-18,-130,25,80);x.fillRect(8,-130,25,80);
+ }
+ if(flash>0){
+  x.fillStyle="#ffd84a";x.beginPath();x.moveTo(132,-121);x.lineTo(185,-145);x.lineTo(166,-118);x.lineTo(190,-95);x.lineTo(132,-108);x.fill();
+ }
+ x.restore();
+}
+
+function updateHUD(){
+ document.getElementById("hp").style.width=(player.hp/200*100)+"%";
+ document.getElementById("status").textContent="HP "+Math.ceil(player.hp)+" / 200";
+ document.getElementById("ammo").textContent=ammo;
+ document.getElementById("reserve").textContent="/ "+reserve;
+ document.getElementById("wname").textContent=weapons[wi].name;
+}
+
+let prev=performance.now();
+function loop(now){
+ let dt=Math.min(.033,(now-prev)/1000);prev=now;
+ move(dt);
+ flash=Math.max(0,flash-dt*8);
+ hitTimer=Math.max(0,hitTimer-dt);
+ npc.hit=Math.max(0,npc.hit-dt);
+ npc.flash=Math.max(0,npc.flash-dt);
+ if(mouseDown&&weapons[wi].auto)shoot();
+ 
+ x.clearRect(0,0,W,H);
+ drawWorld();
+ drawNPC();
+ drawGun();
+ 
+ let h=document.getElementById("hit");
+ h.classList.toggle("show",hitTimer>0);
+ updateHUD();
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden)mouseDown=false
+});
+</script>
+</body>
+</html>
