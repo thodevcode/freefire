@@ -2,785 +2,645 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>FF Test Range</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kéo Tâm Trainer — Đổi Súng UMP / M1887</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0a0a0e;touch-action:none;font-family:'Segoe UI',Arial,sans-serif;}
-#c{position:fixed;inset:0;width:100%;height:100%;display:block;}
-#ui{position:fixed;inset:0;pointer-events:none;user-select:none;}
-#crosshair{position:fixed;left:50%;top:50%;width:1px;height:1px;pointer-events:none;}
-.chLine{position:absolute;background:#e8fff5;box-shadow:0 0 3px rgba(0,0,0,.8);border-radius:1px;}
-.chDot{position:absolute;left:-2px;top:-2px;width:4px;height:4px;background:#ff4b3e;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,.9);}
-#hitmark{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);width:26px;height:26px;pointer-events:none;opacity:0;transition:opacity .05s;}
-#hitmark::before,#hitmark::after{content:'';position:absolute;background:#ff4b3e;width:100%;height:3px;top:50%;left:0;margin-top:-1.5px;}
-#hitmark::before{transform:rotate(45deg);}
-#hitmark::after{transform:rotate(-45deg);}
-#hitmark.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-#killfeed{position:fixed;top:14px;left:50%;transform:translateX(-50%);color:#ff4b3e;font-weight:800;font-size:20px;letter-spacing:2px;text-shadow:0 2px 6px rgba(0,0,0,.8);opacity:0;transition:opacity .2s;pointer-events:none;}
-#killfeed.show{opacity:1;}
-#npcHealthWrap{position:fixed;width:70px;height:8px;margin-left:-35px;margin-top:-10px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.3);border-radius:4px;overflow:hidden;pointer-events:none;display:none;}
-#npcHealthBar{height:100%;width:100%;background:linear-gradient(90deg,#8bff5a,#3ecf4a);transition:width .1s linear;}
-#topbar{position:fixed;top:12px;left:12px;display:flex;gap:8px;align-items:center;}
-.pill{background:rgba(10,10,14,.55);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.12);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.5px;}
-#gearBtn{pointer-events:auto;width:38px;height:38px;border-radius:50%;background:rgba(10,10,14,.55);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-#settings{position:fixed;top:60px;left:12px;width:230px;background:rgba(10,10,14,.78);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;color:#fff;pointer-events:auto;display:none;}
-#settings.show{display:block;}
-#settings label{font-size:12px;display:flex;justify-content:space-between;margin-bottom:4px;color:#cfd8dc;}
-#settings input[type=range]{width:100%;accent-color:#ff4b3e;}
-#settings .row{margin-bottom:14px;}
-#weaponHud{position:fixed;right:14px;bottom:140px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none;}
-#ammoBox{background:rgba(10,10,14,.55);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 14px;text-align:right;color:#fff;min-width:120px;}
-#wName{font-weight:800;font-size:16px;letter-spacing:1px;color:#ff4b3e;}
-#wAmmo{font-size:26px;font-weight:800;line-height:1;}
-#wAmmo span{font-size:14px;color:#9aa0a6;font-weight:600;}
-#reloadWrap{width:100%;height:4px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-top:6px;display:none;}
-#reloadBar{height:100%;width:0;background:#ffcc33;}
-#weaponPicker{display:flex;gap:6px;pointer-events:auto;}
-.wBtn{width:46px;height:46px;border-radius:10px;background:rgba(10,10,14,.6);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.wBtn.active{border-color:#ff4b3e;background:rgba(255,75,62,.25);}
-#reloadKeyHint{position:fixed;right:16px;bottom:262px;color:#cfd8dc;font-size:11px;background:rgba(10,10,14,.45);padding:4px 8px;border-radius:6px;pointer-events:none;}
-#joyBase{position:fixed;left:26px;bottom:34px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);pointer-events:auto;touch-action:none;}
-#joyKnob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.5);pointer-events:none;}
-#fireBtn{position:fixed;right:24px;bottom:24px;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,95,80,.9),rgba(180,20,10,.85));border:3px solid rgba(255,255,255,.4);color:#fff;font-weight:800;font-size:14px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;box-shadow:0 4px 18px rgba(255,50,30,.5);user-select:none;}
-#fireBtn.active{transform:scale(.92);box-shadow:0 2px 8px rgba(255,50,30,.7);}
-#reloadBtn{position:fixed;right:128px;bottom:38px;width:56px;height:56px;border-radius:50%;background:rgba(10,10,14,.6);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;pointer-events:auto;}
-#dmgPop{position:fixed;pointer-events:none;color:#ffcc33;font-weight:800;font-size:18px;text-shadow:0 2px 4px rgba(0,0,0,.8);opacity:0;transition:transform .55s ease-out,opacity .55s ease-out;}
-#centerMsg{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);color:#ff4b3e;font-size:30px;font-weight:900;letter-spacing:3px;text-shadow:0 3px 10px rgba(0,0,0,.8);opacity:0;transition:opacity .25s;pointer-events:none;}
-#centerMsg.show{opacity:1;}
-#loading{position:fixed;inset:0;background:#0a0a0e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;letter-spacing:1px;z-index:50;}
+  :root{
+    --ump: #5ad1ff;
+    --ump-dark: #14587f;
+    --m1887: #ff8a4c;
+    --m1887-dark: #7a3311;
+    --bg-panel: rgba(10,14,18,0.82);
+    --border: rgba(255,255,255,0.08);
+    --text-dim: #8fa3ad;
+    --danger: #ff4d5e;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{
+    width:100%; height:100%; overflow:hidden;
+    background:#05080a;
+    font-family: 'Consolas','Courier New', ui-monospace, monospace;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  #stage{ position:relative; width:100vw; height:100vh; }
+  canvas{ position:absolute; top:0; left:0; display:block; cursor:none; }
+
+  /* ---------- Overlay khoá chuột ---------- */
+  #lockOverlay{
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center, rgba(20,30,36,0.55), rgba(2,4,6,0.92));
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; z-index:50; cursor:pointer;
+    transition:opacity .25s ease;
+  }
+  #lockOverlay.hidden{ opacity:0; pointer-events:none; }
+  #lockOverlay h1{
+    color:#eaf6fb; font-size:26px; letter-spacing:1px; font-weight:700;
+  }
+  #lockOverlay p{ color:var(--text-dim); font-size:13px; max-width:440px; text-align:center; line-height:1.6; }
+  #lockOverlay .hint{
+    margin-top:10px; padding:10px 22px; border:1px solid var(--border);
+    border-radius:6px; color:#dff1f8; font-size:13px; background:rgba(255,255,255,0.04);
+  }
+  #lockOverlay kbd{
+    background:#1a2126; border:1px solid #3a464c; border-bottom-width:2px;
+    padding:2px 7px; border-radius:4px; color:#fff; font-size:12px;
+  }
+
+  /* ---------- HUD chung ---------- */
+  .hud{ position:absolute; z-index:20; pointer-events:none; }
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:8px; backdrop-filter: blur(3px);
+  }
+
+  /* Súng + Đạn — góc dưới phải */
+  #weaponHud{
+    right:22px; bottom:22px; padding:14px 18px 12px;
+    min-width:230px; text-align:right;
+    border-left:3px solid var(--accent, var(--ump));
+  }
+  #weaponName{
+    font-size:24px; font-weight:700; letter-spacing:1px; color:#fff;
+    transition:color .15s ease;
+  }
+  #weaponType{ font-size:11px; color:var(--text-dim); margin-top:2px; letter-spacing:.5px; }
+  #ammoRow{ display:flex; align-items:baseline; justify-content:flex-end; gap:6px; margin-top:8px; }
+  #ammoCur{ font-size:34px; font-weight:800; color:#fff; line-height:1; }
+  #ammoMax{ font-size:15px; color:var(--text-dim); }
+  #reloadBarWrap{
+    margin-top:8px; height:5px; width:100%; background:rgba(255,255,255,0.08);
+    border-radius:3px; overflow:hidden; visibility:hidden;
+  }
+  #reloadBarWrap.show{ visibility:visible; }
+  #reloadBar{ height:100%; width:0%; background:var(--accent, var(--ump)); }
+  #reloadLabel{ font-size:11px; color:var(--accent,var(--ump)); margin-top:4px; visibility:hidden; }
+  #reloadLabel.show{ visibility:visible; }
+  #emptyLabel{ font-size:11px; color:var(--danger); margin-top:4px; visibility:hidden; font-weight:700; }
+  #emptyLabel.show{ visibility:visible; }
+
+  /* Danh sách phím đổi súng */
+  #weaponSlots{ margin-top:12px; display:flex; gap:8px; justify-content:flex-end; }
+  .slot{
+    display:flex; align-items:center; gap:7px; padding:5px 9px 5px 6px;
+    border:1px solid var(--border); border-radius:6px; opacity:.5;
+    background:rgba(255,255,255,0.03);
+  }
+  .slot.active{ opacity:1; border-color:var(--accent,var(--ump)); background:rgba(255,255,255,0.07); }
+  .slot .k{
+    width:18px; height:18px; border-radius:4px; background:#20272b; color:#fff;
+    font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:700;
+  }
+  .slot span.label{ font-size:11px; color:#dfeaef; }
+
+  /* Thông số kéo tâm — góc trên trái */
+  #statsHud{ left:20px; top:20px; padding:12px 16px; min-width:230px; }
+  #statsHud h2{ font-size:11px; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:8px; font-weight:600; }
+  .statLine{ display:flex; justify-content:space-between; font-size:12px; color:#dfeaef; margin-bottom:5px; }
+  .statLine b{ color:var(--accent,var(--ump)); font-weight:700; }
+
+  /* Bảng điểm — góc trên phải */
+  #scoreHud{ right:20px; top:20px; padding:10px 16px; min-width:170px; text-align:right; }
+  #scoreHud h2{ font-size:11px; letter-spacing:1.5px; color:var(--text-dim); margin-bottom:6px; font-weight:600; }
+  .scoreLine{ font-size:12px; color:#dfeaef; margin-bottom:3px; display:flex; justify-content:space-between; gap:14px; }
+  .scoreLine b{ color:#fff; }
+
+  /* Hit feed — góc dưới trái */
+  #feedHud{ left:20px; bottom:22px; display:flex; flex-direction:column-reverse; gap:4px; min-width:220px; }
+  .feedItem{
+    font-size:12px; padding:5px 10px; border-radius:5px; background:rgba(0,0,0,0.45);
+    border-left:3px solid #666; color:#dfeaef; opacity:0; transform:translateX(-6px);
+    animation: feedIn .15s ease forwards;
+  }
+  @keyframes feedIn{ to{ opacity:1; transform:translateX(0);} }
+  .feedItem.head{ border-left-color:var(--danger); color:#ffd7db; }
+  .feedItem.body{ border-left-color:#ffd54a; }
+  .feedItem.kill{ border-left-color:#7CFC9A; color:#d6ffe0; font-weight:700; }
+
+  /* Nhãn khoảng cách trên các bia */
+  .rangeTag{ position:absolute; color:#bcd; font-size:11px; opacity:.55; }
+
+  #centerMsg{
+    position:absolute; left:50%; top:38%; transform:translate(-50%,-50%);
+    font-size:15px; color:var(--danger); font-weight:700; opacity:0; letter-spacing:1px;
+    text-shadow:0 0 10px rgba(255,77,94,.6); pointer-events:none; z-index:15;
+  }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="loading">Đang tải map...</div>
-<div id="ui">
-  <div id="crosshair">
-    <div class="chDot"></div>
-    <div class="chLine" id="chT" style="width:2px;height:10px;"></div>
-    <div class="chLine" id="chB" style="width:2px;height:10px;"></div>
-    <div class="chLine" id="chL" style="width:10px;height:2px;"></div>
-    <div class="chLine" id="chR" style="width:10px;height:2px;"></div>
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <!-- HUD: thông số kéo tâm hiện tại -->
+  <div class="hud panel" id="statsHud">
+    <h2>THÔNG SỐ KÉO TÂM (LIVE)</h2>
+    <div class="statLine"><span>Độ nhạy kéo tâm</span><b id="sensVal">1.00x</b></div>
+    <div class="statLine"><span>Độ giật / phát</span><b id="recoilVal">0.0</b></div>
+    <div class="statLine"><span>Tốc độ bắn</span><b id="rofVal">0 RPM</b></div>
+    <div class="statLine"><span>Tâm hút (magnet)</span><b id="magnetVal">—</b></div>
   </div>
-  <div id="hitmark"></div>
-  <div id="killfeed">HẠ GỤC MỤC TIÊU!</div>
+
+  <!-- HUD: bảng điểm -->
+  <div class="hud panel" id="scoreHud">
+    <h2>THỐNG KÊ</h2>
+    <div class="scoreLine"><span>Headshot</span><b id="statHead">0</b></div>
+    <div class="scoreLine"><span>Trúng thân</span><b id="statBody">0</b></div>
+    <div class="scoreLine"><span>Hạ gục</span><b id="statKill">0</b></div>
+    <div class="scoreLine"><span>Độ chính xác</span><b id="statAcc">0%</b></div>
+  </div>
+
+  <!-- HUD: tên súng + đạn -->
+  <div class="hud panel" id="weaponHud">
+    <div id="weaponName">UMP</div>
+    <div id="weaponType">Súng trường — Full Auto</div>
+    <div id="ammoRow"><span id="ammoCur">30</span><span id="ammoMax">/ 120</span></div>
+    <div id="reloadBarWrap"><div id="reloadBar"></div></div>
+    <div id="reloadLabel">ĐANG NẠP ĐẠN...</div>
+    <div id="emptyLabel">HẾT ĐẠN — NHẤN R</div>
+    <div id="weaponSlots">
+      <div class="slot active" id="slot1"><span class="k">1</span><span class="label">UMP</span></div>
+      <div class="slot" id="slot2"><span class="k">2</span><span class="label">M1887</span></div>
+    </div>
+  </div>
+
+  <div class="hud" id="feedHud"></div>
   <div id="centerMsg">HẠ GỤC!</div>
-  <div id="npcHealthWrap"><div id="npcHealthBar"></div></div>
 
-  <div id="topbar">
-    <div class="pill" id="fpsPill">60 FPS</div>
-    <div id="gearBtn">⚙</div>
+  <div id="lockOverlay">
+    <h1>🎯 KÉO TÂM TRAINER</h1>
+    <p>Click để khoá chuột và bắt đầu ngắm bắn. Giữ chuột trái để bắn (UMP tự động — M1887 bán tự động).
+       Nhấn <kbd>1</kbd> để cầm UMP, <kbd>2</kbd> để cầm M1887, <kbd>R</kbd> để nạp đạn.
+       Khi súng giật, hãy kéo chuột XUỐNG để đưa tâm ngắm (vòng tròn mờ) trở lại mục tiêu.</p>
+    <div class="hint">Nhấn <kbd>ESC</kbd> bất cứ lúc nào để thoát khoá chuột</div>
   </div>
-
-  <div id="settings">
-    <div class="row">
-      <label>Độ nhạy chuột <span id="sensVal">40</span></label>
-      <input type="range" id="sensRange" min="5" max="100" value="40">
-    </div>
-    <div class="row">
-      <label>Âm lượng súng <span id="volVal">70</span></label>
-      <input type="range" id="volRange" min="0" max="100" value="70">
-    </div>
-    <div class="row" style="font-size:11px;color:#9aa0a6;">
-      WASD di chuyển · Shift chạy · Kéo màn hình để nhìn · Đè nút BẮN rồi kéo để chỉnh tâm · R nạp đạn · 1/2 đổi súng
-    </div>
-  </div>
-
-  <div id="weaponHud">
-    <div id="ammoBox">
-      <div id="wName">UMP</div>
-      <div id="wAmmo">30<span>/30</span></div>
-      <div id="reloadWrap"><div id="reloadBar"></div></div>
-    </div>
-    <div id="weaponPicker">
-      <div class="wBtn active" data-w="ump">1<br>UMP</div>
-      <div class="wBtn" data-w="m1887">2<br>M1887</div>
-    </div>
-  </div>
-  <div id="reloadKeyHint">R để nạp đạn</div>
-
-  <div id="joyBase"><div id="joyKnob"></div></div>
-  <div id="reloadBtn">NẠP</div>
-  <div id="fireBtn">BẮN</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-(function(){
+(() => {
 "use strict";
 
-var scene, camera, renderer, raycaster;
-var yawObject, pitchObject;
-var clock = { last: performance.now() };
-var W = window.innerWidth, H = window.innerHeight;
-
-function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-
-function initScene(){
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x8fc7e0);
-  scene.fog = new THREE.Fog(0x8fc7e0, 35, 150);
-
-  yawObject = new THREE.Object3D();
-  yawObject.position.set(0, 1.7, 16);
-  pitchObject = new THREE.Object3D();
-  yawObject.add(pitchObject);
-  camera = new THREE.PerspectiveCamera(72, W/H, 0.05, 500);
-  pitchObject.add(camera);
-  scene.add(yawObject);
-
-  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, powerPreference:'high-performance' });
-  renderer.setSize(W,H);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
-
-  var hemi = new THREE.HemisphereLight(0xffffff, 0x5b6b3f, 0.9);
-  scene.add(hemi);
-  var sun = new THREE.DirectionalLight(0xfff3d6, 0.85);
-  sun.position.set(20,30,10);
-  scene.add(sun);
-  var fill = new THREE.DirectionalLight(0xcfe8ff, 0.25);
-  fill.position.set(-15,10,-10);
-  scene.add(fill);
-
-  raycaster = new THREE.Raycaster();
+/* ================= CANVAS SETUP ================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W=0, H=0;
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
 }
+window.addEventListener('resize', resize);
+resize();
 
-function makeGridTexture(){
-  var s = 512;
-  var cvs = document.createElement('canvas');
-  cvs.width = s; cvs.height = s;
-  var ctx = cvs.getContext('2d');
-  ctx.fillStyle = '#c9a066';
-  ctx.fillRect(0,0,s,s);
-  ctx.strokeStyle = 'rgba(90,60,25,0.35)';
-  ctx.lineWidth = 2;
-  var step = s/8;
-  for(var i=0;i<=8;i++){
-    ctx.beginPath(); ctx.moveTo(i*step,0); ctx.lineTo(i*step,s); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,i*step); ctx.lineTo(s,i*step); ctx.stroke();
-  }
-  for(var k=0;k<250;k++){
-    ctx.fillStyle = 'rgba(60,40,15,'+(Math.random()*0.08)+')';
-    ctx.fillRect(Math.random()*s, Math.random()*s, Math.random()*6+2, Math.random()*6+2);
-  }
-  var tex = new THREE.CanvasTexture(cvs);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(20,20);
-  return tex;
-}
-
-var crateMeshes = [];
-function buildMap(){
-  var groundGeo = new THREE.PlaneGeometry(200,200);
-  var groundMat = new THREE.MeshStandardMaterial({ map: makeGridTexture(), roughness:1 });
-  var ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI/2;
-  scene.add(ground);
-
-  var wallMat = new THREE.MeshStandardMaterial({ color:0x5c4a33, roughness:0.9 });
-  var wallH = 3, wallLen = 100, wallT = 1.2, R = 49;
-  var positions = [
-    [0,wallH/2,-R, wallLen,wallH,wallT],
-    [0,wallH/2, R, wallLen,wallH,wallT],
-    [-R,wallH/2,0, wallT,wallH,wallLen],
-    [ R,wallH/2,0, wallT,wallH,wallLen]
-  ];
-  positions.forEach(function(p){
-    var g = new THREE.BoxGeometry(p[3],p[4],p[5]);
-    var m = new THREE.Mesh(g, wallMat);
-    m.position.set(p[0],p[1],p[2]);
-    scene.add(m);
-  });
-
-  var crateMat = new THREE.MeshStandardMaterial({ color:0x8a5a2b, roughness:0.8 });
-  var crateSpots = [[6,-6],[-8,-10],[10,4],[-5,10],[14,-14],[-14,-4],[3,14],[-12,12],[18,10],[-18,-16]];
-  crateSpots.forEach(function(p){
-    var size = 1.2 + Math.random()*0.6;
-    var g = new THREE.BoxGeometry(size,size,size);
-    var m = new THREE.Mesh(g, crateMat);
-    m.position.set(p[0], size/2, p[1]);
-    m.rotation.y = Math.random()*Math.PI;
-    scene.add(m);
-    crateMeshes.push(m);
-  });
-}
-
-var npc, npcHitMesh, npcHead;
-var npcState = { health:100, maxHealth:100, alive:true, fallT:0 };
-function buildNPC(){
-  npc = new THREE.Object3D();
-  npc.position.set(0,0,-14);
-  npc.rotation.y = Math.PI;
-
-  var skin = new THREE.MeshStandardMaterial({ color:0xe0a878, roughness:0.7 });
-  var suit = new THREE.MeshStandardMaterial({ color:0x3d5a3d, roughness:0.8 });
-  var suitDark = new THREE.MeshStandardMaterial({ color:0x28381f, roughness:0.8 });
-
-  var legs = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.9,10), suitDark);
-  legs.position.y = 0.45;
-  npc.add(legs);
-
-  var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.2,0.8,10), suit);
-  torso.position.y = 1.3;
-  npc.add(torso);
-
-  var armGeo = new THREE.CylinderGeometry(0.08,0.08,0.7,8);
-  var armL = new THREE.Mesh(armGeo, suit); armL.position.set(0.3,1.3,0); armL.rotation.z = 0.15; npc.add(armL);
-  var armR = new THREE.Mesh(armGeo, suit); armR.position.set(-0.3,1.3,0); armR.rotation.z = -0.15; npc.add(armR);
-
-  npcHead = new THREE.Mesh(new THREE.SphereGeometry(0.22,14,14), skin);
-  npcHead.position.y = 1.85;
-  npc.add(npcHead);
-
-  var cap = new THREE.Mesh(new THREE.SphereGeometry(0.23,14,14,0,Math.PI*2,0,Math.PI/2), suitDark);
-  cap.position.y = 1.9;
-  npc.add(cap);
-
-  scene.add(npc);
-
-  var hitGeo = new THREE.BoxGeometry(0.62,2.0,0.5);
-  var hitMat = new THREE.MeshBasicMaterial({ color:0xff0000, transparent:true, opacity:0 });
-  npcHitMesh = new THREE.Mesh(hitGeo, hitMat);
-  npcHitMesh.position.set(npc.position.x, 1.05, npc.position.z);
-  scene.add(npcHitMesh);
-}
-
-function flashNpc(){
-  npc.traverse(function(o){
-    if(o.isMesh && o.material && o.material.emissive){
-      o.material.emissive.setHex(0xff2222);
-      setTimeout(function(){ if(o.material.emissive) o.material.emissive.setHex(0x000000); }, 90);
-    }
-  });
-}
-
-function killNpc(){
-  npcState.alive = false;
-  showCenterMsg('HẠ GỤC!');
-  var start = performance.now();
-  function fall(){
-    var t = (performance.now()-start)/450;
-    if(t>1) t=1;
-    npc.rotation.x = -t*Math.PI/2.1;
-    npc.position.y = -t*0.3;
-    if(t<1) requestAnimationFrame(fall);
-  }
-  fall();
-  setTimeout(respawnNpc, 2200);
-}
-
-function respawnNpc(){
-  npcState.health = npcState.maxHealth;
-  npcState.alive = true;
-  npc.rotation.x = 0;
-  npc.position.y = 0;
-  updateHealthBarValue();
-}
-
-function updateHealthBarValue(){
-  var pct = Math.max(0, npcState.health/npcState.maxHealth*100);
-  document.getElementById('npcHealthBar').style.width = pct+'%';
-}
-
-function applyDamage(amount, hitPoint){
-  if(!npcState.alive) return;
-  npcState.health -= amount;
-  flashNpc();
-  spawnDmgPopup(amount, hitPoint);
-  if(npcState.health<=0){
-    npcState.health = 0;
-    updateHealthBarValue();
-    killNpc();
-  } else {
-    updateHealthBarValue();
-  }
-}
-
-function spawnDmgPopup(amount, point){
-  var v = point.clone().project(camera);
-  var x = (v.x*0.5+0.5)*W;
-  var y = (-v.y*0.5+0.5)*H;
-  var el = document.createElement('div');
-  el.id = 'dmgPop';
-  el.textContent = '-'+Math.round(amount);
-  el.style.left = x+'px';
-  el.style.top = y+'px';
-  document.getElementById('ui').appendChild(el);
-  requestAnimationFrame(function(){
-    el.style.opacity = '1';
-    requestAnimationFrame(function(){
-      el.style.transform = 'translateY(-40px)';
-      el.style.opacity = '0';
-    });
-  });
-  setTimeout(function(){ el.remove(); }, 650);
-}
-
-function showCenterMsg(txt){
-  var el = document.getElementById('centerMsg');
-  el.textContent = txt;
-  el.classList.add('show');
-  setTimeout(function(){ el.classList.remove('show'); }, 700);
-}
-
-var decals = [];
-var decalGeo = new THREE.CircleGeometry(0.05,8);
-function spawnDecal(point, normal){
-  var mat = new THREE.MeshBasicMaterial({ color:0x1a1208, transparent:true, opacity:0.55, depthWrite:false });
-  var d = new THREE.Mesh(decalGeo, mat);
-  d.position.copy(point).add(normal.clone().multiplyScalar(0.01));
-  d.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), normal);
-  scene.add(d);
-  decals.push(d);
-  if(decals.length>36){ scene.remove(decals.shift()); }
-}
-
-var gunMount, umpModel, m1887Model;
-var gunKick = 0;
-function buildWeaponModels(){
-  gunMount = new THREE.Object3D();
-  gunMount.position.set(0.26,-0.26,-0.55);
-  camera.add(gunMount);
-
-  var metal = new THREE.MeshStandardMaterial({ color:0x1c1c1e, roughness:0.45, metalness:0.6 });
-  var metalLight = new THREE.MeshStandardMaterial({ color:0x3a3a3d, roughness:0.4, metalness:0.7 });
-  var wood = new THREE.MeshStandardMaterial({ color:0x6b4324, roughness:0.75 });
-  var accent = new THREE.MeshStandardMaterial({ color:0xff4b3e, roughness:0.4, metalness:0.3 });
-
-  umpModel = new THREE.Object3D();
-  var body = new THREE.Mesh(new THREE.BoxGeometry(0.11,0.13,0.62), metal);
-  umpModel.add(body);
-  var barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.28,10), metalLight);
-  barrel.rotation.z = Math.PI/2;
-  barrel.position.set(0,0.015,-0.45);
-  umpModel.add(barrel);
-  var mag = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.28,0.09), metal);
-  mag.position.set(0,-0.2,-0.06);
-  mag.rotation.x = 0.12;
-  umpModel.add(mag);
-  var stock = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.08,0.24), metalLight);
-  stock.position.set(0,0.0,0.38);
-  umpModel.add(stock);
-  var grip = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.2,0.08), metal);
-  grip.position.set(0,-0.17,0.14);
-  grip.rotation.x = -0.35;
-  umpModel.add(grip);
-  var sight = new THREE.Mesh(new THREE.BoxGeometry(0.03,0.04,0.05), accent);
-  sight.position.set(0,0.095,-0.2);
-  umpModel.add(sight);
-  gunMount.add(umpModel);
-
-  m1887Model = new THREE.Object3D();
-  var barrelGeoS = new THREE.CylinderGeometry(0.028,0.028,0.5,10);
-  var bar1 = new THREE.Mesh(barrelGeoS, metalLight);
-  bar1.rotation.z = Math.PI/2; bar1.position.set(0.03,0.02,-0.32);
-  m1887Model.add(bar1);
-  var bar2 = new THREE.Mesh(barrelGeoS, metalLight);
-  bar2.rotation.z = Math.PI/2; bar2.position.set(-0.03,0.02,-0.32);
-  m1887Model.add(bar2);
-  var receiver = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.12,0.22), metal);
-  receiver.position.set(0,0.0,0.02);
-  m1887Model.add(receiver);
-  var pump = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.08,0.16), metalLight);
-  pump.position.set(0,-0.06,-0.18);
-  m1887Model.add(pump);
-  var stockW = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.1,0.32), wood);
-  stockW.position.set(0,0.0,0.3);
-  m1887Model.add(stockW);
-  var gripW = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.18,0.1), wood);
-  gripW.position.set(0,-0.15,0.12);
-  gripW.rotation.x = -0.3;
-  m1887Model.add(gripW);
-  m1887Model.visible = false;
-  gunMount.add(m1887Model);
-
-  var flashMat = new THREE.SpriteMaterial({ color:0xffcc55, transparent:true, opacity:0 });
-  muzzleFlash = new THREE.Sprite(flashMat);
-  muzzleFlash.scale.set(0.22,0.22,0.22);
-  muzzleFlash.position.set(0,0.015,-0.75);
-  gunMount.add(muzzleFlash);
-}
-var muzzleFlash;
-
-function doMuzzleFlash(){
-  muzzleFlash.material.opacity = 1;
-  var s = 0.16 + Math.random()*0.1;
-  muzzleFlash.scale.set(s,s,s);
-  setTimeout(function(){ muzzleFlash.material.opacity = 0; }, 45);
-}
-
-var WEAPONS = {
+/* ================= WEAPON DEFINITIONS ================= */
+// Tất cả đơn vị khoảng cách quy ước theo "mét" giả lập (12m = bia gần, 45m = bia xa)
+const WEAPONS = {
   ump: {
-    name:'UMP', fireRate:105, damage:19, pellets:1, spreadAngle:0.006,
-    recoilKick:0.0075, recoilKickGrow:0.0012, maxKick:0.055, recoilYaw:0.0045,
-    mag:30, ammo:30, reloadTime:1700, model:null
+    id:'ump', name:'UMP', type:'Súng trường — Full Auto',
+    fireMode:'auto', fireRate:95,           // ms/phát -> ~632 RPM
+    magSize:30, reserve:120,
+    reloadTime:1650,
+    bodyDmg:30, headDmg:70, pellets:1,
+    sensitivity:1.0,                        // độ nhạy kéo tâm VỪA PHẢI
+    recoilKick:3.0, recoilSide:1.4, recoilRecover:6.6,
+    falloffStart:30, range:85, falloffMin:0.60,   // tâm hút ở tầm xa tốt -> ít mất sát thương xa
+    magnet:{ enabled:true, radius:60, strength:0.16, onlyLongRange:true },
+    color:'#5ad1ff', dark:'#14587f'
   },
   m1887: {
-    name:'M1887', fireRate:820, damage:14, pellets:8, spreadAngle:0.05,
-    recoilKick:0.05, recoilKickGrow:0.0, maxKick:0.06, recoilYaw:0.012,
-    mag:2, ammo:2, reloadTime:2300, model:null
+    id:'m1887', name:'M1887', type:'Shotgun — Bán tự động (Bơm)',
+    fireMode:'semi', fireRate:820,
+    magSize:8, reserve:32,
+    reloadTime:2500,
+    bodyDmg:20, headDmg:50, pellets:5, pelletSpreadPx:60,
+    sensitivity:1.4,                        // độ nhạy CAO -> dễ vung lên đầu ở tầm gần
+    recoilKick:9.5, recoilSide:4.6, recoilRecover:4.0,
+    falloffStart:8, range:20, falloffMin:0.15,     // tầm bắn NGẮN, rớt sát thương nhanh
+    magnet:{ enabled:false },
+    color:'#ff8a4c', dark:'#7a3311'
   }
 };
-var currentKey = 'ump';
 
-var lastShotTime = 0, consecutiveShots = 0, preSprayPitch = null;
-var reloading = false, reloadStart = 0;
-var spreadVal = 0;
+/* ================= STATE ================= */
+let currentWeaponId = 'ump';
+let ammo = { ump: WEAPONS.ump.magSize, m1887: WEAPONS.m1887.magSize };
+let reserve = { ump: WEAPONS.ump.reserve, m1887: WEAPONS.m1887.reserve };
+let reloading = false, reloadStart = 0;
+let switching = false, switchTimer = 0;
+let firing = false;
+let lastShot = 0;
+let locked = false;
 
-function currentWeapon(){ return WEAPONS[currentKey]; }
+// aim = vị trí tâm "vật lý" (nơi tay/chuột thật sự đang chỉ, chưa tính giật)
+const aim = { x: W/2, y: H*0.55 };
+// recoilOffset = độ lệch do giật súng gây ra (kéo tâm lên trên màn hình)
+const recoil = { x:0, y:0 };
 
-function setWeapon(key){
-  if(reloading) return;
-  currentKey = key;
-  umpModel.visible = (key==='ump');
-  m1887Model.visible = (key==='m1887');
-  consecutiveShots = 0;
-  preSprayPitch = null;
-  document.querySelectorAll('.wBtn').forEach(function(b){ b.classList.toggle('active', b.dataset.w===key); });
-  document.getElementById('wName').textContent = currentWeapon().name;
-  updateAmmoUI();
+const damageNumbers = []; // {x,y,text,color,life,vy}
+let feedSeq = 0;
+
+const stats = { head:0, body:0, kills:0, shotsFired:0, hitsLanded:0 };
+
+/* ================= TARGETS (bia tập) ================= */
+const targets = [
+  { id:'near', label:'BIA GẦN', meters:12, scale:1.55, longRange:false,
+    x:0, y:0, hp:300, maxHp:300, dead:false, respawnAt:0, hitFlash:0 },
+  { id:'far', label:'BIA XA', meters:45, scale:0.62, longRange:true,
+    x:0, y:0, hp:300, maxHp:300, dead:false, respawnAt:0, hitFlash:0 }
+];
+function layoutTargets(){
+  targets[0].x = W*0.34; targets[0].y = H*0.62;
+  targets[1].x = W*0.72; targets[1].y = H*0.50;
+}
+layoutTargets();
+window.addEventListener('resize', layoutTargets);
+
+/* ================= POINTER LOCK ================= */
+const overlay = document.getElementById('lockOverlay');
+overlay.addEventListener('click', () => canvas.requestPointerLock());
+document.addEventListener('pointerlockchange', () => {
+  locked = document.pointerLockElement === canvas;
+  overlay.classList.toggle('hidden', locked);
+  if(!locked) firing = false;
+});
+document.addEventListener('mousemove', (e) => {
+  if(!locked) return;
+  const w = WEAPONS[currentWeaponId];
+  aim.x += e.movementX * w.sensitivity;
+  aim.y += e.movementY * w.sensitivity;
+  aim.x = Math.max(20, Math.min(W-20, aim.x));
+  aim.y = Math.max(20, Math.min(H-20, aim.y));
+});
+canvas.addEventListener('mousedown', (e) => {
+  if(!locked || e.button !== 0) return;
+  firing = true;
+  if(WEAPONS[currentWeaponId].fireMode === 'semi') tryShoot(); // 1 phát/click
+});
+window.addEventListener('mouseup', (e) => { if(e.button===0) firing = false; });
+
+/* ================= KEYBOARD: ĐỔI SÚNG / NẠP ĐẠN ================= */
+window.addEventListener('keydown', (e) => {
+  if(e.key === '1') switchWeapon('ump');
+  else if(e.key === '2') switchWeapon('m1887');
+  else if(e.key.toLowerCase() === 'r') startReload();
+});
+
+function switchWeapon(id){
+  if(currentWeaponId === id || switching) return;
+  currentWeaponId = id;
+  switching = true; switchTimer = 280; // độ trễ khi đổi súng
+  reloading = false;
+  recoil.x = 0; recoil.y = 0;
+  const w = WEAPONS[id];
+  document.documentElement.style.setProperty('--accent', w.color);
+  document.getElementById('weaponHud').style.borderLeftColor = w.color;
+  document.getElementById('weaponName').textContent = w.name;
+  document.getElementById('weaponName').style.color = w.color;
+  document.getElementById('weaponType').textContent = w.type;
+  document.getElementById('slot1').classList.toggle('active', id==='ump');
+  document.getElementById('slot2').classList.toggle('active', id==='m1887');
+  document.getElementById('magnetVal').textContent = w.magnet.enabled ? 'Bật (tầm xa)' : 'Tắt';
+  pushFeed(`Đã đổi sang ${w.name}`, 'kill');
 }
 
-function updateAmmoUI(){
-  var w = currentWeapon();
-  document.getElementById('wAmmo').innerHTML = w.ammo+'<span>/'+w.mag+'</span>';
-}
-
+/* ================= NẠP ĐẠN ================= */
 function startReload(){
-  var w = currentWeapon();
-  if(reloading || w.ammo>=w.mag) return;
-  reloading = true;
-  reloadStart = performance.now();
-  document.getElementById('reloadWrap').style.display = 'block';
+  if(reloading || switching) return;
+  const w = WEAPONS[currentWeaponId];
+  if(ammo[currentWeaponId] >= w.magSize || reserve[currentWeaponId] <= 0) return;
+  reloading = true; reloadStart = performance.now();
 }
-
-function updateReloadUI(now){
-  if(!reloading) return;
-  var w = currentWeapon();
-  var t = (now-reloadStart)/w.reloadTime;
-  if(t>=1){
-    w.ammo = w.mag;
+function updateReload(now){
+  const w = WEAPONS[currentWeaponId];
+  const wrap = document.getElementById('reloadBarWrap');
+  const lbl = document.getElementById('reloadLabel');
+  if(!reloading){ wrap.classList.remove('show'); lbl.classList.remove('show'); return; }
+  wrap.classList.add('show'); lbl.classList.add('show');
+  const t = Math.min(1, (now - reloadStart) / w.reloadTime);
+  document.getElementById('reloadBar').style.width = (t*100).toFixed(0)+'%';
+  if(t >= 1){
+    const need = w.magSize - ammo[currentWeaponId];
+    const give = Math.min(need, reserve[currentWeaponId]);
+    ammo[currentWeaponId] += give;
+    reserve[currentWeaponId] -= give;
     reloading = false;
-    document.getElementById('reloadWrap').style.display = 'none';
-    updateAmmoUI();
-    return;
   }
-  document.getElementById('reloadBar').style.width = (t*100)+'%';
 }
 
-var audioCtx = null;
-var soundVolume = 0.7;
-function ensureAudio(){
-  if(!audioCtx){
-    var AC = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AC();
-  }
-  if(audioCtx.state === 'suspended') audioCtx.resume();
-}
-function playShot(key){
-  if(!audioCtx || soundVolume<=0) return;
-  var isShotgun = key==='m1887';
-  var dur = isShotgun?0.28:0.11;
-  var bufferSize = Math.floor(audioCtx.sampleRate*dur);
-  var buffer = audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);
-  var data = buffer.getChannelData(0);
-  for(var i=0;i<bufferSize;i++){
-    var env = Math.pow(1-i/bufferSize, isShotgun?1.4:3);
-    data[i] = (Math.random()*2-1)*env;
-  }
-  var src = audioCtx.createBufferSource();
-  src.buffer = buffer;
-  var filter = audioCtx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = isShotgun?1100:3200;
-  var gain = audioCtx.createGain();
-  gain.gain.value = (isShotgun?0.9:0.5)*soundVolume;
-  src.connect(filter).connect(gain).connect(audioCtx.destination);
-  src.start();
-}
+/* ================= BẮN ================= */
+function tryShoot(){
+  const now = performance.now();
+  const w = WEAPONS[currentWeaponId];
+  if(reloading || switching) return;
+  if(ammo[currentWeaponId] <= 0){ return; }
+  if(now - lastShot < w.fireRate) return;
+  lastShot = now;
+  ammo[currentWeaponId]--;
+  stats.shotsFired++;
 
-var hitmarkTimer = null;
-function showHitMarker(){
-  var el = document.getElementById('hitmark');
-  el.classList.add('show');
-  clearTimeout(hitmarkTimer);
-  hitmarkTimer = setTimeout(function(){ el.classList.remove('show'); }, 110);
-}
+  // ĐỘ GIẬT: đẩy tâm lên + lệch ngang ngẫu nhiên theo súng đang cầm
+  recoil.y += w.recoilKick * (0.85 + Math.random()*0.3);
+  recoil.x += (Math.random()*2-1) * w.recoilSide;
 
-function fireOnce(now){
-  var w = currentWeapon();
-  if(reloading) return;
-  if(w.ammo<=0){ startReload(); return; }
-  if(now - lastShotTime < w.fireRate) return;
-  lastShotTime = now;
-  w.ammo--;
-  consecutiveShots++;
-  if(preSprayPitch===null) preSprayPitch = pitchObject.rotation.x;
+  const crossX = aim.x + recoil.x;
+  const crossY = aim.y - recoil.y;
 
-  var kick = Math.min(w.recoilKick + w.recoilKickGrow*consecutiveShots, w.maxKick);
-  pitchObject.rotation.x = clamp(pitchObject.rotation.x + kick, -1.3, 1.4);
-  yawObject.rotation.y += (Math.random()-0.5)*w.recoilYaw;
-  spreadVal = Math.min(spreadVal + 7, 34);
-  gunKick = 0.06;
-
-  var camPos = new THREE.Vector3();
-  camera.getWorldPosition(camPos);
-  var targets = [npcHitMesh].concat(crateMeshes);
-
-  for(var p=0; p<w.pellets; p++){
-    var dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    if(w.pellets>1){
-      dir.x += (Math.random()-0.5)*w.spreadAngle;
-      dir.y += (Math.random()-0.5)*w.spreadAngle;
-      dir.z += (Math.random()-0.5)*w.spreadAngle*0.3;
-      dir.normalize();
+  for(let p=0; p<w.pellets; p++){
+    let px = crossX, py = crossY;
+    if(w.pellets > 1){
+      px += (Math.random()*2-1) * w.pelletSpreadPx;
+      py += (Math.random()*2-1) * (w.pelletSpreadPx*0.6);
     }
-    raycaster.set(camPos, dir);
-    raycaster.far = 200;
-    var hits = raycaster.intersectObjects(targets, false);
-    if(hits.length){
-      var hit = hits[0];
-      if(hit.object === npcHitMesh){
-        applyDamage(w.damage, hit.point);
-        showHitMarker();
-      } else if(hit.face){
-        var n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-        spawnDecal(hit.point, n);
-      }
+    resolveHit(w, px, py);
+  }
+  if(ammo[currentWeaponId] <= 0) pushFeed('Hết đạn! Nhấn R để nạp', 'head');
+}
+
+function falloffFactor(w, meters){
+  if(meters <= w.falloffStart) return 1;
+  if(meters >= w.range) return w.falloffMin;
+  const t = (meters - w.falloffStart) / (w.range - w.falloffStart);
+  return 1 - t*(1-w.falloffMin);
+}
+
+function hitTestTarget(t, x, y){
+  if(t.dead) return null;
+  const s = t.scale;
+  const headC = { x: t.x, y: t.y - 92*s };
+  const headR = 25*s;
+  const dx = x-headC.x, dy = y-headC.y;
+  if(dx*dx+dy*dy <= headR*headR) return 'head';
+  const bw=66*s, bh=150*s;
+  const bx0=t.x-bw/2, bx1=t.x+bw/2, by0=t.y-68*s, by1=t.y+82*s;
+  if(x>=bx0 && x<=bx1 && y>=by0 && y<=by1) return 'body';
+  return null;
+}
+
+function resolveHit(w, x, y){
+  for(const t of targets){
+    const part = hitTestTarget(t, x, y);
+    if(!part) continue;
+    stats.hitsLanded++;
+    const ff = falloffFactor(w, t.meters);
+    const base = part === 'head' ? w.headDmg : w.bodyDmg;
+    const dmg = Math.round(base * ff);
+    t.hp -= dmg;
+    t.hitFlash = 1;
+    if(part==='head') stats.head++; else stats.body++;
+    spawnDamageNumber(x, y, dmg, part);
+    pushFeed(`${w.name} → ${part==='head'?'ĐẦU':'Thân'} -${dmg} (${t.label} ${t.meters}m)`, part);
+    if(t.hp <= 0 && !t.dead){
+      t.dead = true; t.respawnAt = performance.now() + 700;
+      stats.kills++;
+      flashCenter();
+      pushFeed(`Hạ gục ${t.label}!`, 'kill');
     }
-  }
-  playShot(currentKey);
-  doMuzzleFlash();
-  updateAmmoUI();
-  if(w.ammo<=0) startReload();
-}
-
-var keys = {};
-window.addEventListener('keydown', function(e){
-  var tag = document.activeElement.tagName;
-  if(tag==='INPUT') return;
-  var k = e.key.toLowerCase();
-  keys[k] = true;
-  if(k==='1') setWeapon('ump');
-  if(k==='2') setWeapon('m1887');
-  if(k==='r') startReload();
-});
-window.addEventListener('keyup', function(e){
-  keys[e.key.toLowerCase()] = false;
-});
-
-var joyAxis = { x:0, y:0 };
-function setupJoystick(){
-  var base = document.getElementById('joyBase');
-  var knob = document.getElementById('joyKnob');
-  var active = false, pid = null, cx=0, cy=0, maxR = 40;
-  base.addEventListener('pointerdown', function(e){
-    active = true; pid = e.pointerId;
-    base.setPointerCapture(pid);
-    var r = base.getBoundingClientRect();
-    cx = r.left + r.width/2; cy = r.top + r.height/2;
-  });
-  base.addEventListener('pointermove', function(e){
-    if(!active || e.pointerId!==pid) return;
-    var dx = e.clientX-cx, dy = e.clientY-cy;
-    var d = Math.hypot(dx,dy);
-    if(d>maxR){ dx = dx/d*maxR; dy = dy/d*maxR; }
-    knob.style.transform = 'translate('+dx+'px,'+dy+'px)';
-    joyAxis.x = dx/maxR; joyAxis.y = dy/maxR;
-  });
-  function end(e){
-    if(e.pointerId!==pid) return;
-    active = false; pid = null;
-    knob.style.transform = 'translate(0,0)';
-    joyAxis.x = 0; joyAxis.y = 0;
-  }
-  base.addEventListener('pointerup', end);
-  base.addEventListener('pointercancel', end);
-}
-
-var sensitivity = 40, dragPid = null, lastX=0, lastY=0, firing=false;
-function applyLook(dx, dy){
-  var s = sensitivity*0.0022;
-  yawObject.rotation.y -= dx*s;
-  pitchObject.rotation.x -= dy*s;
-  pitchObject.rotation.x = clamp(pitchObject.rotation.x, -1.3, 1.4);
-}
-
-function setupFireButton(){
-  var btn = document.getElementById('fireBtn');
-  btn.addEventListener('pointerdown', function(e){
-    ensureAudio();
-    btn.setPointerCapture(e.pointerId);
-    firing = true;
-    dragPid = e.pointerId;
-    lastX = e.clientX; lastY = e.clientY;
-    btn.classList.add('active');
-  });
-  btn.addEventListener('pointermove', function(e){
-    if(e.pointerId!==dragPid) return;
-    var dx = e.clientX-lastX, dy = e.clientY-lastY;
-    lastX = e.clientX; lastY = e.clientY;
-    applyLook(dx,dy);
-  });
-  function end(e){
-    if(e.pointerId!==dragPid) return;
-    firing = false; dragPid = null;
-    btn.classList.remove('active');
-  }
-  btn.addEventListener('pointerup', end);
-  btn.addEventListener('pointercancel', end);
-}
-
-var lookPid = null, lookLastX=0, lookLastY=0;
-function setupCanvasLook(){
-  var cvs = document.getElementById('c');
-  cvs.addEventListener('pointerdown', function(e){
-    lookPid = e.pointerId;
-    cvs.setPointerCapture(lookPid);
-    lookLastX = e.clientX; lookLastY = e.clientY;
-  });
-  cvs.addEventListener('pointermove', function(e){
-    if(e.pointerId!==lookPid) return;
-    var dx = e.clientX-lookLastX, dy = e.clientY-lookLastY;
-    lookLastX = e.clientX; lookLastY = e.clientY;
-    applyLook(dx,dy);
-  });
-  function end(e){ if(e.pointerId===lookPid) lookPid = null; }
-  cvs.addEventListener('pointerup', end);
-  cvs.addEventListener('pointercancel', end);
-}
-
-function setupUI(){
-  document.querySelectorAll('.wBtn').forEach(function(b){
-    b.addEventListener('click', function(){ setWeapon(b.dataset.w); });
-  });
-  document.getElementById('reloadBtn').addEventListener('click', startReload);
-  var gear = document.getElementById('gearBtn');
-  var panel = document.getElementById('settings');
-  gear.addEventListener('click', function(){ panel.classList.toggle('show'); });
-
-  var sens = document.getElementById('sensRange');
-  var sensVal = document.getElementById('sensVal');
-  sens.addEventListener('input', function(){ sensitivity = parseInt(sens.value,10); sensVal.textContent = sens.value; });
-
-  var vol = document.getElementById('volRange');
-  var volVal = document.getElementById('volVal');
-  vol.addEventListener('input', function(){ soundVolume = parseInt(vol.value,10)/100; volVal.textContent = vol.value; });
-}
-
-function updateMovement(dt){
-  var mx=0, mz=0;
-  if(keys['w']) mz+=1;
-  if(keys['s']) mz-=1;
-  if(keys['d']) mx+=1;
-  if(keys['a']) mx-=1;
-  mx += joyAxis.x;
-  mz -= joyAxis.y;
-  var len = Math.hypot(mx,mz);
-  if(len>1){ mx/=len; mz/=len; }
-  if(len>0.02){
-    var yaw = yawObject.rotation.y;
-    var forward = new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
-    var right = new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
-    var speed = keys['shift'] ? 6.4 : 4.1;
-    yawObject.position.addScaledVector(forward, mz*speed*dt);
-    yawObject.position.addScaledVector(right, mx*speed*dt);
-    yawObject.position.x = clamp(yawObject.position.x, -46, 46);
-    yawObject.position.z = clamp(yawObject.position.z, -46, 46);
+    return; // 1 viên chỉ trúng 1 mục tiêu
   }
 }
 
-function updateCrosshair(){
-  var s = spreadVal;
-  document.getElementById('chT').style.transform = 'translate(-1px,'+(-10-s)+'px)';
-  document.getElementById('chB').style.transform = 'translate(-1px,'+(6+s)+'px)';
-  document.getElementById('chL').style.transform = 'translate('+(-10-s)+'px,-1px)';
-  document.getElementById('chR').style.transform = 'translate('+(6+s)+'px,-1px)';
+function spawnDamageNumber(x,y,dmg,part){
+  damageNumbers.push({
+    x, y, text: (part==='head'? '💥 ' : '') + '-'+dmg,
+    color: part==='head' ? '#ff5d6c' : '#ffd54a',
+    life: 1, vy: -0.55
+  });
 }
 
-function updateNpcHealthPos(){
-  var wrap = document.getElementById('npcHealthWrap');
-  if(!npcState.alive){ wrap.style.display='none'; return; }
-  var pos = new THREE.Vector3();
-  npcHead.getWorldPosition(pos);
-  pos.y += 0.35;
-  var v = pos.clone().project(camera);
-  if(v.z>1){ wrap.style.display='none'; return; }
-  var x = (v.x*0.5+0.5)*W;
-  var y = (-v.y*0.5+0.5)*H;
-  wrap.style.display = 'block';
-  wrap.style.left = x+'px';
-  wrap.style.top = y+'px';
+let centerMsgTimer=0;
+function flashCenter(){ centerMsgTimer = 900; }
+
+function pushFeed(text, cls){
+  const feed = document.getElementById('feedHud');
+  const el = document.createElement('div');
+  el.className = 'feedItem ' + (cls||'');
+  el.textContent = text;
+  feed.appendChild(el);
+  const id = ++feedSeq;
+  el.dataset.id = id;
+  setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 2600);
+  while(feed.children.length > 6) feed.removeChild(feed.firstChild);
 }
 
-var fpsAcc = 0, fpsCount = 0, fpsLast = performance.now();
-function updateFps(now){
-  fpsCount++;
-  if(now-fpsLast>=500){
-    var fps = Math.round(fpsCount*1000/(now-fpsLast));
-    document.getElementById('fpsPill').textContent = fps+' FPS';
-    fpsCount = 0; fpsLast = now;
-  }
-}
-
-function animate(){
-  requestAnimationFrame(animate);
-  var now = performance.now();
-  var dt = Math.min((now-clock.last)/1000, 0.05);
-  clock.last = now;
-
-  updateMovement(dt);
-
-  if(firing){
-    fireOnce(now);
-  } else if(preSprayPitch!==null){
-    pitchObject.rotation.x = THREE.MathUtils.lerp(pitchObject.rotation.x, preSprayPitch, Math.min(dt*5,1));
-    if(Math.abs(pitchObject.rotation.x - preSprayPitch) < 0.001){
-      pitchObject.rotation.x = preSprayPitch;
-      preSprayPitch = null;
-      consecutiveShots = 0;
+/* ================= MAGNET (TÂM HÚT) — chỉ UMP ở bia xa ================= */
+function applyMagnet(w){
+  if(!w.magnet.enabled) return;
+  for(const t of targets){
+    if(w.magnet.onlyLongRange && !t.longRange) continue;
+    if(t.dead) continue;
+    const cx = t.x, cy = t.y - 40*t.scale;
+    const dx = cx-aim.x, dy = cy-aim.y;
+    const d = Math.hypot(dx,dy);
+    if(d < w.magnet.radius){
+      aim.x += dx * w.magnet.strength * 0.06;
+      aim.y += dy * w.magnet.strength * 0.06;
     }
   }
-
-  spreadVal = Math.max(0, spreadVal - dt*70);
-  updateCrosshair();
-
-  gunKick = THREE.MathUtils.lerp(gunKick, 0, Math.min(dt*9,1));
-  gunMount.position.z = -0.55 + gunKick;
-
-  updateReloadUI(now);
-  updateNpcHealthPos();
-  updateFps(now);
-
-  renderer.render(scene, camera);
 }
 
-function onResize(){
-  W = window.innerWidth; H = window.innerHeight;
-  camera.aspect = W/H;
-  camera.updateProjectionMatrix();
-  renderer.setSize(W,H);
+/* ================= VẼ NỀN & BIA ================= */
+function drawBackground(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0b1418'); g.addColorStop(0.55,'#0d1a1f'); g.addColorStop(1,'#132227');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+  // sàn
+  ctx.fillStyle = '#0a1013';
+  ctx.fillRect(0, H*0.78, W, H*0.22);
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<14;i++){
+    const yy = H*0.78 + i*i*1.4;
+    if(yy>H) break;
+    ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke();
+  }
+  // vạch khoảng cách dọc trường bắn
+  ctx.fillStyle = 'rgba(255,255,255,0.035)';
+  for(let i=0;i<6;i++){
+    ctx.fillRect(W*0.12 + i*(W*0.16), H*0.2, 2, H*0.6);
+  }
 }
 
-function boot(){
-  initScene();
-  buildMap();
-  buildNPC();
-  buildWeaponModels();
-  setupJoystick();
-  setupFireButton();
-  setupCanvasLook();
-  setupUI();
-  setWeapon('ump');
-  updateHealthBarValue();
-  window.addEventListener('resize', onResize);
-  document.getElementById('loading').style.display = 'none';
-  clock.last = performance.now();
-  animate();
+function drawDummy(t){
+  if(t.dead){
+    const remain = t.respawnAt - performance.now();
+    if(remain <= 0){ t.dead=false; t.hp=t.maxHp; }
+    else return;
+  }
+  const s = t.scale;
+  ctx.save();
+  ctx.translate(t.x, t.y);
+
+  // chân đế
+  ctx.strokeStyle = '#3a4147'; ctx.lineWidth = 6*s;
+  ctx.beginPath(); ctx.moveTo(0,120*s); ctx.lineTo(0,190*s); ctx.stroke();
+  ctx.fillStyle = '#2a2f33'; ctx.fillRect(-30*s,188*s,60*s,10*s);
+
+  const flash = t.hitFlash>0;
+  const bodyColor = flash ? '#ff7b7b' : '#7d8f96';
+  const headColor = flash ? '#ffb2b2' : '#9fb0b5';
+
+  // thân
+  ctx.fillStyle = bodyColor;
+  roundRect(-33*s, -68*s, 66*s, 150*s, 10*s); ctx.fill();
+  // tay
+  ctx.strokeStyle = bodyColor; ctx.lineWidth = 14*s; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-33*s,-40*s); ctx.lineTo(-58*s,30*s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(33*s,-40*s); ctx.lineTo(58*s,30*s); ctx.stroke();
+
+  // đầu
+  ctx.fillStyle = headColor;
+  ctx.beginPath(); ctx.arc(0,-92*s,25*s,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth=2; ctx.stroke();
+
+  // viền vùng đầu (chỉ báo hitbox nhẹ)
+  ctx.strokeStyle = 'rgba(255,80,80,0.35)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,-92*s,25*s,0,Math.PI*2); ctx.stroke();
+
+  ctx.restore();
+
+  if(t.hitFlash>0) t.hitFlash -= 0.08;
+
+  // Thanh máu
+  ctx.save();
+  const barW = 90*s, barX = t.x-barW/2, barY = t.y-138*s;
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(barX,barY,barW,7);
+  const hpRatio = Math.max(0,t.hp/t.maxHp);
+  ctx.fillStyle = hpRatio>0.4 ? '#7CFC9A' : '#ff5d5d';
+  ctx.fillRect(barX,barY,barW*hpRatio,7);
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.strokeRect(barX,barY,barW,7);
+  ctx.fillStyle='#cfe8ee'; ctx.font='11px monospace'; ctx.textAlign='center';
+  ctx.fillText(`${t.label} · ${t.meters}m`, t.x, barY-8);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
 }
 
-boot();
+/* ================= VẼ TÂM NGẮM ================= */
+function drawCrosshair(){
+  const w = WEAPONS[currentWeaponId];
+  const cx = aim.x + recoil.x;
+  const cy = aim.y - recoil.y;
+
+  // vòng mờ = vị trí "tay/chuột" gốc (chưa cộng giật) — mục tiêu cần kéo về đây
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(aim.x, aim.y, 16, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // tâm thật (đã cộng độ giật) — nơi đạn sẽ bay tới
+  ctx.save();
+  ctx.strokeStyle = w.color;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.95;
+  const gap = 6, len = 10;
+  ctx.beginPath();
+  ctx.moveTo(cx-gap-len,cy); ctx.lineTo(cx-gap,cy);
+  ctx.moveTo(cx+gap,cy); ctx.lineTo(cx+gap+len,cy);
+  ctx.moveTo(cx,cy-gap-len); ctx.lineTo(cx,cy-gap);
+  ctx.moveTo(cx,cy+gap); ctx.lineTo(cx,cy+gap+len);
+  ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,1.6,0,Math.PI*2); ctx.fillStyle=w.color; ctx.fill();
+  ctx.restore();
+
+  // đường nối thể hiện độ lệch cần kéo
+  if(Math.hypot(recoil.x,recoil.y) > 3){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(aim.x,aim.y); ctx.lineTo(cx,cy); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ================= VẼ SỐ SÁT THƯƠNG ================= */
+function drawDamageNumbers(dt){
+  ctx.save();
+  ctx.font = 'bold 16px monospace'; ctx.textAlign='center';
+  for(let i=damageNumbers.length-1;i>=0;i--){
+    const d = damageNumbers[i];
+    d.life -= dt*0.0016;
+    d.y += d.vy;
+    if(d.life<=0){ damageNumbers.splice(i,1); continue; }
+    ctx.globalAlpha = Math.max(0,d.life);
+    ctx.fillStyle = d.color;
+    ctx.fillText(d.text, d.x, d.y);
+  }
+  ctx.restore();
+}
+
+/* ================= VẼ THÔNG BÁO GIỮA MÀN HÌNH ================= */
+function updateCenterMsg(dt){
+  const el = document.getElementById('centerMsg');
+  if(centerMsgTimer>0){
+    centerMsgTimer -= dt;
+    el.style.opacity = Math.min(1, centerMsgTimer/300);
+  } else {
+    el.style.opacity = 0;
+  }
+}
+
+/* ================= HUD DOM UPDATE ================= */
+function updateHudText(){
+  const w = WEAPONS[currentWeaponId];
+  document.getElementById('ammoCur').textContent = ammo[currentWeaponId];
+  document.getElementById('ammoMax').textContent = '/ ' + reserve[currentWeaponId];
+  document.getElementById('emptyLabel').classList.toggle('show', ammo[currentWeaponId]===0 && !reloading);
+
+  document.getElementById('sensVal').textContent = w.sensitivity.toFixed(2)+'x';
+  document.getElementById('recoilVal').textContent = w.recoilKick.toFixed(1)+' / phát';
+  document.getElementById('rofVal').textContent = Math.round(60000/w.fireRate)+' RPM';
+
+  document.getElementById('statHead').textContent = stats.head;
+  document.getElementById('statBody').textContent = stats.body;
+  document.getElementById('statKill').textContent = stats.kills;
+  const acc = stats.shotsFired>0 ? Math.round(stats.hitsLanded/stats.shotsFired*100) : 0;
+  document.getElementById('statAcc').textContent = acc+'%';
+}
+
+/* ================= VÒNG LẶP CHÍNH ================= */
+let lastTime = performance.now();
+function loop(now){
+  const dt = now - lastTime; lastTime = now;
+
+  // đổi súng: đếm ngược thời gian thao tác
+  if(switching){
+    switchTimer -= dt;
+    if(switchTimer<=0) switching=false;
+  }
+
+  updateReload(now);
+
+  // bắn liên thanh nếu đang giữ chuột (chỉ auto)
+  if(firing && WEAPONS[currentWeaponId].fireMode==='auto') tryShoot();
+
+  // hồi giật dần về 0 (súng "lắng" xuống)
+  const w = WEAPONS[currentWeaponId];
+  recoil.y = Math.max(0, recoil.y - w.recoilRecover*(dt/16));
+  recoil.x *= 0.90;
+
+  applyMagnet(w);
+
+  drawBackground();
+  targets.forEach(drawDummy);
+  drawDamageNumbers(dt);
+  drawCrosshair();
+  updateCenterMsg(dt);
+  updateHudText();
+
+  requestAnimationFrame(loop);
+}
+switchWeapon('ump'); // khởi tạo HUD súng đầu tiên
+document.getElementById('magnetVal').textContent = 'Bật (tầm xa)';
+requestAnimationFrame(loop);
+
 })();
 </script>
 </body>
